@@ -1,27 +1,25 @@
 import * as Discord from 'discord.js';
-import ytdl from './discord-ytdl-core';
+import ytdl from '../utils/discord-ytdl-core';
+import { Game } from '../types/game';
 import { 
-  Game,
   Difficulty, 
-  GameData,
+  QuizData,
   Player,
-} from '../types/game';
+} from '../types/quiz';
 import {
   WrapMsgAsCodeBlock,
-  Delay,
-} from './helpers';
+  Delay
+} from '../utils/helpers';
+import { BGM_LIB } from '../data/index'
 
-const VIDEO_ID = 'DhUdOO9UNwY';
-const TEST_URL = `https://www.youtube.com/watch?v=${VIDEO_ID}`;
-
-export class GameInstance implements Game {
+export class Quiz implements Game {
   // Discord Integration
   client: Discord.Client;
   vc: Discord.VoiceChannel;
   channel: Discord.TextChannel | Discord.DMChannel | Discord.NewsChannel;
 
   // Game Data
-  data: GameData;
+  data: QuizData;
   isActive: Boolean;
   listenerEnabled: Boolean;
 
@@ -65,7 +63,7 @@ export class GameInstance implements Game {
     };
   }
 
-  async start(callback: () => void): Promise<void> {
+  async Start(callback: () => void): Promise<void> {
     try {
       // Start the Game
       // TODO: Help message here
@@ -85,7 +83,7 @@ export class GameInstance implements Game {
     }
   }
 
-  async listener(user: Discord.User, msg: string): Promise<void> {
+  async Listener(user: Discord.User, msg: string): Promise<void> {
     
   }
 
@@ -96,24 +94,26 @@ export class GameInstance implements Game {
     this.channel.send(WrapMsgAsCodeBlock(`[Round ${round}] Start!`));
     // Randomly pick a song
     // Randomly pick a start time between (0, duration - playtime)
-    const info = await ytdl.getInfo(VIDEO_ID);
+    const video = BGM_LIB[Math.floor(Math.random() * BGM_LIB.length)];
+    const info = await ytdl.getInfo(video.youtube);
     const beginAt = Math.floor(
       Math.random() * Math.max(Number(info.videoDetails.lengthSeconds) - this.data.durationSecs, 0)
       );
-    const buffer = ytdl(TEST_URL, {
+    const buffer = ytdl(info.videoDetails.video_url, {
           filter: 'audioonly',
+          quality: 'highestaudio',
           opusEncoded: true,
           encoderArgs: [
             '-ss', `${beginAt}`,
-            '-af', 'bass=g=10'
           ]
         });
     await Delay(1 * 1000); //TODO: Allow some buffer loading
     const dispatcher = connection.play(buffer, { type: 'opus' })
-    .on('error', err => {
-      console.log(err);
-    });
+      .on('error', err => {
+        console.log(err);
+      });
     this.listenerEnabled = true;
+    console.log(`Playing: ${video.metadata.title} - ${info.videoDetails.video_url}`)
     await Delay(this.data.durationSecs * 1000);
 
     // End the round
