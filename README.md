@@ -26,12 +26,12 @@ On your Discord Server, the following commands are available to you:
 
 ```
   Listening Option:
-    !mmq --listen (-l)		Start listening
-    !mmq --skip (-s)		Skip the current song
-    !mmq --quit (-q)		Stop listening
+    !mmq --listen (-l)      Start listening
+    !mmq --skip (-s)        Skip the current song
+    !mmq --quit (-q)        Stop listening
 
   Quiz Options:
-  	!mmq --play (-p)		Start Quiz
+    !mmq --play (-p)        Start Quiz
 ```
 > Discord facing CLI expected to change in the future
 > TODO: Quiz not yet complete
