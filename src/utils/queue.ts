@@ -1,11 +1,11 @@
 
 // Derived: https://basarat.gitbook.io/algorithms/datastructures/queue
 // Basic Queue functionality. Supports:
-// 	- push
-// 	- pop
-// 	- front
-// 	- clear
-// 	- length
+//  - push
+//  - pop
+//  - front
+//  - clear
+//  - length
 // usage:
 // let q = new Queue<Type>()
 export default class Queue<T> {
@@ -17,15 +17,15 @@ export default class Queue<T> {
     return this._store.shift();
   }
   front(): T | undefined {
-  	if(this._store.length > 0) {
-  		return this._store[0];
-  	}
-  	return undefined;
+    if(this._store.length > 0) {
+      return this._store[0];
+    }
+    return undefined;
   }
   clear(): void {
-  	this._store = [];
+    this._store = [];
   }
   length(): number {
-  	return this._store.length;
+    return this._store.length;
   }
 }

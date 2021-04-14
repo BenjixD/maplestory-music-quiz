@@ -11,13 +11,13 @@ interface YTDLStreamOptions extends downloadOptions {
     encoderArgs?: string[];
     fmt?: string;
     opusEncoded?: boolean;
-};
+}
 
 interface StreamOptions {
     encoderArgs?: string[];
     fmt?: string;
     opusEncoded?: boolean;
-};
+}
 
 /**
   * Create an opus stream for your video with provided encoder args
@@ -65,7 +65,7 @@ const StreamDownloader = (url: string, options: YTDLStreamOptions) => {
         inputStream.on("error", () => transcoder.destroy());
         output.on("close", () => transcoder.destroy());
         return output;
-    };
+    }
 
     const opus = new Opus.Encoder({
         rate: 48000,
@@ -142,7 +142,7 @@ const arbitraryStream = (stream: string | Readable | Duplex, options: StreamOpti
     if (options && !options.opusEncoded) {
         transcoder.on("close", () => transcoder.destroy());
         return transcoder;
-    };
+    }
     const opus = new Opus.Encoder({
         rate: 48000,
         channels: 2,

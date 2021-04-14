@@ -21,5 +21,5 @@ export interface Player {
   user: Discord.User
   score: number;
   history: Map<number, string>;
-  archived: Boolean;
+  archived: boolean;
 }

@@ -66,10 +66,9 @@ export class Jam implements Game {
       await this.queueSong();
       await this.play();
       // TODO: Fix this
-      while(true) {
+      do {
         await Delay(60 * 1000); // Wait every 60 seconds to check if queue is empty
-        if(this.songQueue.length() === 0) break;
-      }
+      } while(this.songQueue.length() > 0);
     } finally {
       this.connection.disconnect();
       callback();

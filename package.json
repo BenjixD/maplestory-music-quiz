@@ -8,7 +8,8 @@
   "scripts": {
     "build": "tsc",
     "run": "node ./bin/app.js",
-    "local": "ts-node ./src/app.ts"
+    "local": "ts-node ./src/app.ts",
+    "lint": "eslint src/**/*.ts"
   },
   "dependencies": {
     "@discordjs/opus": "^0.5.0",
@@ -21,6 +22,9 @@
   },
   "devDependencies": {
     "@types/ws": "^7.4.1",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "eslint": "^7.24.0",
     "ts-node": "^9.1.1"
   }
 }

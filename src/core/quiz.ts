@@ -20,8 +20,8 @@ export class Quiz implements Game {
 
   // Game Data
   data: QuizData;
-  isActive: Boolean;
-  listenerEnabled: Boolean;
+  isActive: boolean;
+  listenerEnabled: boolean;
 
   constructor(
     client: Discord.Client,
