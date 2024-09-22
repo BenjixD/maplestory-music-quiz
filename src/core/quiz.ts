@@ -1,8 +1,9 @@
 import * as Discord from 'discord.js';
+import * as DiscordVoice from '@discordjs/voice';
 import ytdl from '../utils/discord-ytdl-core';
 import { Game } from '../types/game';
-import { 
-  Difficulty, 
+import {
+  Difficulty,
   QuizData,
   Player,
 } from '../types/quiz';
@@ -40,7 +41,7 @@ export class Quiz implements Game {
     this.channel = channel;
 
     // Check if user is in a voice channel
-    if(!guildMember.voice.channel) {
+    if(!guildMember.voice.channel || guildMember.voice.channel.type === Discord.ChannelType.GuildStageVoice) {
       channel.send(`<@${data.host.id}>, please join a voice channel to start a quiz!`);
       throw new Error(`host ${data.host.id} is not in a voice channel.`);
     } else {
@@ -49,7 +50,8 @@ export class Quiz implements Game {
 
     // Check if bot has vc permissions
     const permissions = this.vc.permissionsFor(client.user!);
-    if(!permissions!.has('CONNECT') || !permissions!.has('SPEAK')) {
+    if(!permissions!.has(Discord.PermissionsBitField.Flags.Connect) ||
+    !permissions!.has(Discord.PermissionsBitField.Flags.Speak)) {
       throw new Error(`client bot has insufficient permissions for voice channel ${this.vc.id}`);
     }
 
@@ -70,7 +72,20 @@ export class Quiz implements Game {
       this.channel.send(`<@${this.data.host.id}> is starting a Maplestory Music Quiz!`);
       this.channel.send(WrapMsgAsCodeBlock(`The quiz will start in 20 seconds!`));
       // Join the voice chat
-      const connection = await this.vc.join();
+      const connection = DiscordVoice.joinVoiceChannel({
+        channelId: this.vc.id,
+        guildId: this.vc.guild.id,
+        adapterCreator: this.vc.guild.voiceAdapterCreator,
+      });
+
+      await new Promise<void>((res, rej) => {
+        connection.on(DiscordVoice.VoiceConnectionStatus.Ready, () => {
+          res();
+        });
+        connection.on(DiscordVoice.VoiceConnectionStatus.Disconnected, () => {
+          rej();
+        });
+      });
       await Delay(20 * 1000);
 
       for(let i = 1; i <= this.data.rounds; i++) {
@@ -84,12 +99,12 @@ export class Quiz implements Game {
   }
 
   async Listener(user: Discord.User, msg: string): Promise<void> {
-    
+
   }
 
   // Helper Methods
   //
-  async playRound(round: number, connection: Discord.VoiceConnection) {
+  async playRound(round: number, connection: DiscordVoice.VoiceConnection) {
     // Start the Round
     this.channel.send(WrapMsgAsCodeBlock(`[Round ${round}] Start!`));
     // Randomly pick a song
@@ -108,10 +123,15 @@ export class Quiz implements Game {
           ]
         });
     await Delay(1 * 1000); //TODO: Allow some buffer loading
-    const dispatcher = connection.play(buffer, { type: 'opus' })
-      .on('error', err => {
-        console.log(err);
-      });
+    // Create the audio player and resource
+    const dispatcher = DiscordVoice.createAudioPlayer();
+    const resource = DiscordVoice.createAudioResource(buffer, { inputType: DiscordVoice.StreamType.Opus });
+    // play the resource
+    const subscription = connection.subscribe(dispatcher);
+    dispatcher.play(resource);
+    dispatcher.on('error', (err: any) => {
+      console.log(err);
+    });
     this.listenerEnabled = true;
     console.log(`Playing: ${video.metadata.title} - ${info.videoDetails.video_url}`)
     await Delay(this.data.durationSecs * 1000);
@@ -121,7 +141,8 @@ export class Quiz implements Game {
     this.channel.send(WrapMsgAsCodeBlock(`[Round ${round}] Finish!`));
     // TODO: Allow skips
     await Delay(10 * 1000);
-    dispatcher.end();
+    dispatcher.stop();
+    subscription?.unsubscribe();
   }
 
   addPlayer(user: Discord.User): void {

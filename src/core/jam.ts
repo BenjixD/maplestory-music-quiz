@@ -1,3 +1,4 @@
+import * as DiscordVoice from '@discordjs/voice';
 import * as Discord from 'discord.js';
 import ytdl from '../utils/discord-ytdl-core';
 import Queue from '../utils/queue';
@@ -16,8 +17,8 @@ export class Jam implements Game {
   channel: Discord.TextChannel | Discord.DMChannel | Discord.NewsChannel;
 
   // Current Connection
-  connection: Discord.VoiceConnection | null;
-  dispatcher: Discord.StreamDispatcher | null;
+  connection: DiscordVoice.VoiceConnection | null;
+  dispatcher: DiscordVoice.AudioPlayer | null;
   songQueue: Queue<{
       bgm: Bgm,
       videoDetails: any,
@@ -36,14 +37,14 @@ export class Jam implements Game {
     this.channel = channel;
     this.connection = null;
     this.dispatcher = null;
-    this.songQueue = new Queue<{ 
+    this.songQueue = new Queue<{
       bgm: Bgm,
       videoDetails: any,
       buffer: any,
     }>();
 
     // Check if user is in a voice channel
-    if(!guildMember.voice.channel) {
+    if(!guildMember.voice.channel || guildMember.voice.channel.type === Discord.ChannelType.GuildStageVoice) {
       channel.send(`<@${data.host.id}>, please join a voice channel to start listening!`);
       throw new Error(`host ${data.host.id} is not in a voice channel.`);
     } else {
@@ -52,7 +53,8 @@ export class Jam implements Game {
 
     // Check if bot has vc permissions
     const permissions = this.vc.permissionsFor(client.user!);
-    if(!permissions!.has('CONNECT') || !permissions!.has('SPEAK')) {
+    if(!permissions!.has(Discord.PermissionsBitField.Flags.Connect) ||
+    !permissions!.has(Discord.PermissionsBitField.Flags.Speak)) {
       throw new Error(`client bot has insufficient permissions for voice channel ${this.vc.id}`);
     }
   }
@@ -60,7 +62,22 @@ export class Jam implements Game {
   async Start(callback: () => void): Promise<void> {
     // TODO: Help message here
     // Join the voice chat
-    this.connection = await this.vc.join();
+    const connection = DiscordVoice.joinVoiceChannel({
+      channelId: this.vc.id,
+      guildId: this.vc.guild.id,
+      adapterCreator: this.vc.guild.voiceAdapterCreator,
+    });
+    await new Promise<void>((res, rej) => {
+      connection.on(DiscordVoice.VoiceConnectionStatus.Ready, () => {
+        res();
+      });
+      connection.on(DiscordVoice.VoiceConnectionStatus.Disconnected, () => {
+        rej();
+      });
+    });
+    this.connection = connection;
+    this.dispatcher = DiscordVoice.createAudioPlayer();
+    this.connection.subscribe(this.dispatcher);
     try {
       // Queue the first song and start playing
       await this.queueSong();
@@ -78,12 +95,13 @@ export class Jam implements Game {
   async Listener(user: Discord.User, msg: string): Promise<void> {
     if(msg === '-s' || msg === '--skip') {
       // End the current stream
-      this.dispatcher!.end();
+      this.dispatcher?.stop();
       this.songQueue.pop();
       this.play();
     }
     else if(msg === '-q' || msg === '--quit') {
-      this.dispatcher!.end();
+      this.dispatcher?.stop();
+      this.connection?.disconnect();
       this.songQueue.clear();
       this.channel.send('Bye bye!');
     }
@@ -124,14 +142,18 @@ export class Jam implements Game {
       description: `Now Playing: **${song.bgm.metadata.title}**`,
       image: `https://img.youtube.com/vi/${song.bgm.youtube}/0.jpg`,
     }));
-    this.dispatcher = this.connection!.play(song.buffer, { type: 'opus' })
-      .on('finish', async () => {
-        await Delay(1000); // 1 second between songs
-        // recursive call
+    const resource = DiscordVoice.createAudioResource(song.buffer, { inputType: DiscordVoice.StreamType.Opus });
+    // play the resource
+    this.dispatcher!.play(resource);
+    this.dispatcher!.on('stateChange', (oldState, newState) => {
+      if(
+        oldState.status === DiscordVoice.AudioPlayerStatus.Playing &&
+        newState.status === DiscordVoice.AudioPlayerStatus.Idle) {
+        // recursive call (This is pretty bad)
         this.songQueue.pop();
         this.play();
-      })
-      .on('error', err => {
+      }
+    }).on('error', err => {
         console.log(err);
         // recursive call
         this.songQueue.pop();
