@@ -7,7 +7,9 @@ import {
   prefix
 } from './.config.json';
 
-const client = new Discord.Client();
+const client = new Discord.Client({
+  intents: [Discord.GatewayIntentBits.Guilds, Discord.GatewayIntentBits.MessageContent],
+});
 const games = new Map<Discord.Guild, Game>();
 
 client.once("ready", () => {
@@ -22,7 +24,7 @@ client.once("disconnect", () => {
   console.log("Disconnect!");
 });
 
-client.on("message", async message => {
+client.on("messageCreate", async message => {
   if (message.author.bot) return;
   if (!message.content.startsWith(prefix)) return;
   const msg = message.content.slice(prefix.length).trim();
@@ -42,19 +44,23 @@ client.on("message", async message => {
       const game = games.get(message.guild);
       if(game) game.Listener(message.author, msg);
     } catch(err) {
-      helpHandler(message, err);
+      helpHandler(message);
     }
   }
 });
 
-function helpHandler(message: Discord.Message, err: Error) {
-  message.channel.send(`TBD - help!`);
+function helpHandler(message: Discord.Message) {
+  if (message.channel.type === Discord.ChannelType.GuildText) {
+    message.channel.send(`TBD - help!`);
+  }
 }
 
 // Game Mode Creation
-function makeJamHandler(message: Discord.Message) {
-  // Avoid DM messages?
-  if(message.guild === null) {
+function makeJamHandler(message: Discord.OmitPartialGroupDMChannel<Discord.Message>) {
+  // Avoid non texts and DMs
+  if(
+    message.channel.type !== Discord.ChannelType.GuildText ||
+    message.guild === null) {
     return;
   }
 
@@ -76,9 +82,11 @@ function makeJamHandler(message: Discord.Message) {
   }
 }
 
-function makeQuizHandler(message: Discord.Message) {
-  // Avoid DM messages?
-  if(message.guild === null) {
+function makeQuizHandler(message: Discord.OmitPartialGroupDMChannel<Discord.Message>) {
+  // Avoid non texts and DMs
+  if(
+    message.channel.type !== Discord.ChannelType.GuildText ||
+    message.guild === null) {
     return;
   }
 
