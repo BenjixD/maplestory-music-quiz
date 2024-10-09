@@ -1,0 +1,9 @@
+{
+  "name": "orbis-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/orbis-e2e/src",
+  "tags": [],
+  "implicitDependencies": ["orbis"],
+  "// targets": "to see all targets run: nx show project orbis-e2e --web",
+  "targets": {}
+}

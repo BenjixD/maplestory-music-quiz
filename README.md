@@ -1,38 +1,40 @@
 # Maplestory Music Quiz
 
-Code and chill to maplestory music discord bot integration.
+Fullstack Typescript project including NextJS Frontend and Node Backend for music quiz application.
 
-## Setup
+## nx
 
-Create a Discord App and add a Bot User (see [Discord Developers](https://discord.com/developers/docs/intro)). Under `./src`, create a `.config.json` file with the following:
-```json
-{
-    "token": "<REDACTED>",
-    "prefix": "!mmq"
-}
+Monorepo built via:
 ```
-> TODO: Secure the token better
-
-Install the bot via OAuth2 URL to approve Maplestory Music Quiz to a Discord Guild (Server).
-
-## Running the Bot
-
-To develop locally, run the backend application:
-```bash
-yarn local
+npx create-nx-workspace
+npx import [prior nodejs project]
 ```
 
-On your Discord Server, the following commands are available to you:
-
+To Install nx cli locally:
 ```
-  Listening Option:
-    !mmq --listen (-l)      Start listening
-    !mmq --skip (-s)        Skip the current song
-    !mmq --quit (-q)        Stop listening
-
-  Quiz Options:
-    !mmq --play (-p)        Start Quiz
+npx add --global nx@latest
 ```
-> Discord facing CLI expected to change in the future
-> TODO: Quiz not yet complete
 
+run `nx graph` to visually explore what was created.
+
+## Run tasks
+
+To run the dev server for your app, use:
+
+```sh
+nx dev orbis
+```
+
+To create a production bundle:
+
+```sh
+nx build orbis
+```
+
+To see all available targets to run for a project, run:
+
+```sh
+nx show project orbis
+```
+
+These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
