@@ -17,19 +17,26 @@ export function DiscordEmbed(params: {
   image?: string,
   showTimestamp?: boolean,
   footer?: { text: string, iconURL?: string }
-}): Discord.MessageEmbed {
-  const embed = new Discord.MessageEmbed()
-    .setColor(params.color)
+}): Discord.EmbedBuilder {
+  const embed = new Discord.EmbedBuilder()
+    .setColor(params.color as Discord.ColorResolvable);
 
   if(params.title) embed.setTitle(params.title);
   if(params.url) embed.setURL(params.url);
-  if(params.author) embed.setAuthor(params.author.name, params.author.iconURL, params.author.url);
+  if (params.author) embed.setAuthor({
+    name: params.author.name,
+    iconURL: params.author.iconURL,
+    url: params.author.url
+  });
   if(params.description) embed.setDescription(params.description);
   if(params.thumbnail) embed.setThumbnail(params.thumbnail);
   if(params.fields) embed.addFields(...params.fields);
   if(params.image) embed.setImage(params.image);
   if(params.showTimestamp) embed.setTimestamp();
-  if(params.footer) embed.setFooter(params.footer.text, params.footer.iconURL);
+  if (params.footer) embed.setFooter({
+    text: params.footer.text,
+    iconURL: params.footer.iconURL
+  });
 
   return embed;
 }
